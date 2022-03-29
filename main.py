@@ -9,6 +9,38 @@ import urllib.request
 import os
 from PIL import Image, ImageTk
 higher_lower = 0
+name = ''
+
+
+def leaderboard(data):
+    data = data.sort_values(by=['Score'], ascending=False)
+    i = 1
+    window1 = Tk()
+    for row in data.iterrows():
+        print(f"name:{row[1].Name} Score:{row[1].Score}")
+        Label(window1, text=i).grid(row=i, column=0)
+        Label(window1, text=row[1].Name).grid(row=i, column=1)
+        Label(window1, text=row[1].Score).grid(row=i, column=2)
+        i+=1
+    Button(window1, text="Ok", command=window1.destroy).grid(row=i, column=0, columnspan=3)
+    mainloop()
+
+
+def popup(text):
+    window = Tk()
+    Label(window, text=text).grid(row=0, column=0, columnspan=2)
+    Button(window, text="Ok", command=window.destroy)
+    mainloop()
+
+
+def name_popup():
+    window = Tk()
+    e = Entry(window)
+    Label(window, text="Name: ").grid(row=1, column=0, ipady=15)
+    e.grid(row=1, column=1)
+    b = Button(window, text="Ok", command=lambda *args: give_name_value(e.get(), window))
+    b.grid(row=2, column=0, columnspan=2)
+    mainloop()
 
 
 def change_images(url):
@@ -23,16 +55,20 @@ def give_higher_lower_value(value, window):
     higher_lower = value
     window.destroy()
 
+def give_name_value(value, window):
+    global name
+    name = value
+    window.destroy()
+
 
 score = 0
 ia = imdb.IMDb()
 Top250Movies = ia.get_top250_movies()
 firstMovie = ia.get_movie(Top250Movies[random.randint(0, 249)].movieID)
 secondMovie = ia.get_movie(Top250Movies[random.randint(0, 249)].movieID)
-print("Podaj swoja nazwe")
-name = input()
 data = pandas.read_csv("scores.csv")
 movie = ia.search_movie('La Haine')
+name_popup()
 try:
     user_csv_id = data.index[data['Name'].str.match(name)].tolist()[0]
 except IndexError:
@@ -60,16 +96,15 @@ while 1:
     Label(window, text=f"Highscore: {highscore}").grid(row=3, column=0)
     Button(window, text="Higher", command=lambda *args: give_higher_lower_value('2',window)).grid(row=2, column=2)
     Button(window, text="Lower", command=lambda *args: give_higher_lower_value('1',window)).grid(row=2, column=3)
+    Button(window, text="Leaderboard", command=lambda *args: leaderboard(data)).grid(row=4, column=0, columnspan=2)
+    Button(window, text="Close", command=window.destroy).grid(row=4, column=2, columnspan=2)
     mainloop()
     print(f"{firstMovie['title']}  {firstMovie['rating']},\n{secondMovie}")
-    if higher_lower == '1' and firstMovie['rating'] >= secondMovie['rating']:
-        print("gz")
-        score += 1
-    elif higher_lower == '2' and firstMovie['rating'] <= secondMovie['rating']:
-        print("gz")
+    if (higher_lower == '1' and firstMovie['rating'] >= secondMovie['rating']) or \
+    (higher_lower == '2' and firstMovie['rating'] <= secondMovie['rating']):
         score += 1
     else:
-        print("lose")
+        popup("You failed")
         print(f"{firstMovie['rating']}, {secondMovie['rating']}")
         break
     firstMovie = secondMovie
