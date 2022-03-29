@@ -17,7 +17,6 @@ def leaderboard(data):
     i = 1
     window1 = Tk()
     for row in data.iterrows():
-        print(f"name:{row[1].Name} Score:{row[1].Score}")
         Label(window1, text=i).grid(row=i, column=0)
         Label(window1, text=row[1].Name).grid(row=i, column=1)
         Label(window1, text=row[1].Score).grid(row=i, column=2)
@@ -26,10 +25,11 @@ def leaderboard(data):
     mainloop()
 
 
-def popup(text):
+def lost_popup():
     window = Tk()
-    Label(window, text=text).grid(row=0, column=0, columnspan=2)
-    Button(window, text="Ok", command=window.destroy)
+    img = ImageTk.PhotoImage(Image.open('lost.jpg').resize((360, 170)))
+    (Label(window, image=img)).grid(row=0, column=0)
+    Button(window, text="Close", command=window.destroy).grid(row=1, column=0)
     mainloop()
 
 
@@ -67,18 +67,14 @@ Top250Movies = ia.get_top250_movies()
 firstMovie = ia.get_movie(Top250Movies[random.randint(0, 249)].movieID)
 secondMovie = ia.get_movie(Top250Movies[random.randint(0, 249)].movieID)
 data = pandas.read_csv("scores.csv")
-movie = ia.search_movie('La Haine')
 name_popup()
 try:
     user_csv_id = data.index[data['Name'].str.match(name)].tolist()[0]
 except IndexError:
     tmp = pandas.DataFrame({'Name': [name], 'Score': [0]})
     data = data.append(tmp, ignore_index=True)
-    print(data)
     user_csv_id = data.tail(1).index.item()
-print(user_csv_id)
 highscore = data._get_value(user_csv_id, 'Score')
-print(f"highscore: {highscore}")
 final_url1 = f"{firstMovie['cover url'].split('_V1_', 1)[0]}.jpg"
 final_url2 = f"{secondMovie['cover url'].split('_V1_', 1)[0]}.jpg"
 urllib.request.urlretrieve(final_url1, 'first_movie_cover.jpg')
@@ -99,18 +95,16 @@ while 1:
     Button(window, text="Leaderboard", command=lambda *args: leaderboard(data)).grid(row=4, column=0, columnspan=2)
     Button(window, text="Close", command=window.destroy).grid(row=4, column=2, columnspan=2)
     mainloop()
-    print(f"{firstMovie['title']}  {firstMovie['rating']},\n{secondMovie}")
     if (higher_lower == '1' and firstMovie['rating'] >= secondMovie['rating']) or \
     (higher_lower == '2' and firstMovie['rating'] <= secondMovie['rating']):
         score += 1
+        higher_lower = '0'
+        firstMovie = secondMovie
+        secondMovie = ia.get_movie(Top250Movies[random.randint(0, 249)].movieID)
+        change_images(secondMovie['cover url'])
     else:
-        popup("You failed")
-        print(f"{firstMovie['rating']}, {secondMovie['rating']}")
+        lost_popup()
         break
-    firstMovie = secondMovie
-    secondMovie = ia.get_movie(Top250Movies[random.randint(0, 249)].movieID)
-    change_images(secondMovie['cover url'])
-print(f"score:{score}")
 if score > highscore:
     data._set_value(user_csv_id, 'Score', score)
 data.to_csv('scores.csv', index=False)
