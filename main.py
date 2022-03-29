@@ -1,12 +1,22 @@
 import imdb
 import random
 import pandas
+from tkinter import *
+from tkinter.ttk import *
+import urllib.request
+import os
+
+
+def change_images(url):
+    os.remove('first_movie_cover.jpg')
+    os.rename('second_movie_cover.jpg', 'first_movie_cover.jpg')
+    urllib.request.urlretrieve(url, 'second_movie_cover.jpg')
 
 score = 0
 ia = imdb.IMDb()
-Top250 = ia.get_top250_movies()
-firstMovie = Top250[random.randint(0,249)]
-secondMovie = Top250[random.randint(0,249)]
+Top250Movies = ia.get_top250_movies()
+firstMovie = ia.get_movie(Top250Movies[random.randint(0, 249)].movieID)
+secondMovie = ia.get_movie(Top250Movies[random.randint(0, 249)].movieID)
 print("Podaj swoja nazwe")
 name = input()
 data = pandas.read_csv("scores.csv")
@@ -20,6 +30,8 @@ except IndexError:
 print(user_csv_id)
 highscore = data._get_value(user_csv_id, 'Score')
 print(f"highscore: {highscore}")
+urllib.request.urlretrieve(firstMovie['cover url'], 'first_movie_cover.jpg')
+urllib.request.urlretrieve(secondMovie['cover url'], 'second_movie_cover.jpg')
 while 1:
     print(f"{firstMovie['title']}  {firstMovie['rating']},\n{secondMovie}")
     x = input()
@@ -34,7 +46,8 @@ while 1:
         print(f"{firstMovie['rating']}, {secondMovie['rating']}")
         break
     firstMovie = secondMovie
-    secondMovie = Top250[random.randint(0,249)]
+    secondMovie = ia.get_movie(Top250Movies[random.randint(0,249)].movieID)
+    change_images(secondMovie['cover url'])
 print(f"score:{score}")
 if score > highscore:
     data._set_value(user_csv_id, 'Score', score)
